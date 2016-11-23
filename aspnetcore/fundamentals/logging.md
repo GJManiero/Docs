@@ -328,13 +328,27 @@ To configure PerfView for collecting events logged by this provider, add the str
 
 Capturing events on Nano Server requires some additional setup:
 
-* Connect PowerShell remoting to the Nano Server (`Enter-PSSession [name]`).
-* Create an ETW session: `New-EtwTraceSession -Name "MyAppTrace" -LocalFilePath C:\trace.etl`.
-* Add ETW providers
-  * [CLR Provider](https://msdn.microsoft.com/library/ff357718): `Add-EtwTraceProvider -Guid "{e13c0d23-ccbc-4e12-931b-d9cc2eee27e4}" -SessionName MyAppTrace`
-  * ASP.NET Core provider: `Add-EtwTraceProvider -Guid "{3ac73b97-af73-50e9-0822-5da4367920d0}" -SessionName MyAppTrace`  
-  * Other ETW Providers as desired.
+* Connect PowerShell remoting to the Nano Server:
+
+  ```
+  Enter-PSSession [name]
+  ```
+
+* Create an ETW session:
+
+  ```
+  New-EtwTraceSession -Name "MyAppTrace" -LocalFilePath C:\trace.etl
+  ```
+
+* Add ETW providers for [CLR Provider](https://msdn.microsoft.com/library/ff357718), ASP.NET Core, and others as needed. The ASP.NET Core provider GUID is `3ac73b97-af73-50e9-0822-5da4367920d0`. 
+
+  ```
+  Add-EtwTraceProvider -Guid "{e13c0d23-ccbc-4e12-931b-d9cc2eee27e4}" -SessionName MyAppTrace
+  Add-EtwTraceProvider -Guid "{3ac73b97-af73-50e9-0822-5da4367920d0}" -SessionName MyAppTrace
+  ```
+
 * Run the site and do whatever actions you want tracing information for.
+
 * When finished, run `Remove-EtwTraceSession MyAppTrace`
 
   > [!NOTE]
