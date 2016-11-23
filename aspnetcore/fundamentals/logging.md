@@ -312,6 +312,36 @@ loggerFactory.AddDebug()
 
 [AddDebug overloads](https://docs.microsoft.com/aspnet/core/api/microsoft.extensions.logging.debugloggerfactoryextensions) let you pass in a minimum log level or a filter function.
 
+### The EventSource provider
+
+The [Microsoft.Extensions.Logging.EventSource](https://www.nuget.org/packages/Microsoft.Extensions.Logging.EventSource) provider package does event tracing. On Windows it uses [ETW](https://msdn.microsoft.com/library/windows/desktop/bb968803). The provider is cross-platform but there are no event collection and display tools yet for Linux or macOS. 
+
+```csharp
+loggerFactory.AddEventSourceLogger()
+```
+
+The best way to collect and view logs is to use the [PerfView utility](https://www.microsoft.com/en-us/download/details.aspx?id=28567). There are other tools for viewing ETW logs, but they don't work well with the dynamic provider registration that the ASP.NET Core EventSource provider uses. 
+
+To configure PerfView for collecting events logged by this provider, add the string `*Microsoft-Extensions-Logging` to the **Additional Providers** list. (Don't miss the asterisk at the start of the string.)
+
+![Perfview Additional Providers](logging/_static/perfview-additional-providers.png)
+
+Capturing events on Nano Server requires some additional setup:
+
+* Connect PowerShell remoting to the Nano Server (`Enter-PSSession [name]`).
+* Create an ETW session: `New-EtwTraceSession -Name "MyAppTrace" -LocalFilePath C:\trace.etl`.
+* Add ETW providers
+  * [CLR Provider](https://msdn.microsoft.com/library/ff357718): `Add-EtwTraceProvider -Guid "{e13c0d23-ccbc-4e12-931b-d9cc2eee27e4}" -SessionName MyAppTrace`
+  * ASP.NET Core provider: `Add-EtwTraceProvider -Guid "{3ac73b97-af73-50e9-0822-5da4367920d0}" -SessionName MyAppTrace`  
+  * Other ETW Providers as desired.
+* Run the site and do whatever actions you want tracing information for.
+* When finished, run `Remove-EtwTraceSession MyAppTrace`
+
+  > [!NOTE]
+  > Trace sessions are global and must be cleaned up manually. Don't forget the last step!
+
+The resulting *C:\trace.etl* file can be analyzed with PerfView as on other editions of Windows.
+
 ### The Windows EventLog provider
 
 The [Microsoft.Extensions.Logging.EventLog](https://www.nuget.org/packages/Microsoft.Extensions.Logging.EventLog) provider package sends log output to the Windows Event Log.
@@ -332,7 +362,7 @@ loggerFactory.AddTraceSource(sourceSwitchName);
 
 [AddTraceSource overloads](https://docs.microsoft.com/aspnet/core/api/microsoft.extensions.logging.tracesourcefactoryextensions) let you pass in a source switch and a trace listener.
 
-To use this provider, an application has to run on the .NET Framework (rather than .NET Core). The provider lets you route messages to a variety of [listeners](https://msdn.microsoft.com/library/4y5y10s7), such as the [EventLogTraceListener](https://msdn.microsoft.com/library/system.diagnostics.eventlogtracelistener) and the [EventProviderTraceListener](https://msdn.microsoft.com/library/system.diagnostics.eventing.eventprovidertracelistener) for [ETW tracing](https://msdn.microsoft.com/library/ms751538). You'll need to install a package for each listener that you want to use.
+To use this provider, an application has to run on the .NET Framework (rather than .NET Core). The provider lets you route messages to a variety of [listeners](https://msdn.microsoft.com/library/4y5y10s7), such as the [TextWriterTraceListener](https://msdn.microsoft.com/library/system.diagnostics.textwritertracelistener) used in the sample application.
 
 The following example configures a `TraceSource` provider that logs `Warning` and higher messages to the console window.
 
